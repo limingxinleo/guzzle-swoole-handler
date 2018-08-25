@@ -36,6 +36,13 @@ class CoroutineHandler
 
     private $effectiveUrl = '';
 
+    private $options;
+
+    public function __construct($options = [])
+    {
+        $this->options;
+    }
+
     public function __invoke($request)
     {
         $method = $request['http_method'] ?? 'GET';
@@ -58,6 +65,7 @@ class CoroutineHandler
 
         // 初始化Headers
         $this->initHeaders($request);
+        $this->initSettings($this->options);
 
         // 设置客户端参数
         if (!empty($this->settings)) {
@@ -73,6 +81,18 @@ class CoroutineHandler
         }
 
         return $this->getResponse();
+    }
+
+    protected function initSettings($options)
+    {
+        if (isset($options['delay'])) {
+            Coroutine::sleep((float)$options['delay'] / 1000);
+        }
+
+        // 超时
+        if (isset($options['timeout']) && $options['timeout'] > 0) {
+            $this->settings['timeout'] = $options['timeout'];
+        }
     }
 
     protected function initHeaders($request)
