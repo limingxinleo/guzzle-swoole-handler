@@ -17,7 +17,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Guzzlex\\SwooleHandlers\\": "src"
+            "Guzzlex\\SwooleHandlers\\": "src/"
         }
     },
     "autoload-dev": {
