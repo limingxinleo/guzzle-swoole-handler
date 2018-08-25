@@ -1,0 +1,37 @@
+{
+    "name": "limingxinleo/guzzle-swoole-handler",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "php",
+        "swoole",
+        "guzzle",
+        "handler"
+    ],
+    "description": "基于Guzzle的SwooleHandler",
+    "authors": [
+        {
+            "name": "李铭昕",
+            "email": "715557344@qq.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Guzzlex\\SwooleHandlers\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests"
+        }
+    },
+    "require": {
+        "php": ">=7.0",
+        "ext-swoole": "^4.0",
+        "guzzlehttp/guzzle": "^6.3"
+    },
+    "require-dev": {
+        "swoft/swoole-ide-helper": "dev-master",
+        "phpunit/phpunit": "^5.7"
+    }
+}
