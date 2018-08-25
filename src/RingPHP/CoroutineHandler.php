@@ -5,6 +5,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Ring\Core;
+use GuzzleHttp\Ring\Future\CompletedFutureArray;
 use Psr\Http\Message\RequestInterface;
 use Swoole\Coroutine;
 use GuzzleHttp\RequestOptions;
@@ -31,6 +32,10 @@ class CoroutineHandler
      */
     private $settings = [];
 
+    private $btime;
+
+    private $effectiveUrl = '';
+
     public function __invoke($request)
     {
         $method = $request['http_method'] ?? 'GET';
@@ -38,7 +43,8 @@ class CoroutineHandler
         $ssl = 'https' === $scheme;
         $uri = $request['uri'] ?? '/';
         $body = $request['body'] ?? '';
-        $params = parse_url(Core::url($request));
+        $this->effectiveUrl = Core::url($request);
+        $params = parse_url($this->effectiveUrl);
         $host = $params['host'];
         if (!isset($params['port'])) {
             $params['port'] = $ssl ? '443' : '80';
@@ -58,6 +64,7 @@ class CoroutineHandler
             $this->client->set($this->settings);
         }
 
+        $this->btime = microtime(true);
         $this->client->execute($path);
 
         $ex = $this->checkStatusCode($request);
@@ -88,11 +95,15 @@ class CoroutineHandler
 
     protected function getResponse()
     {
-        return [
+        return new CompletedFutureArray([
+            'transfer_stats' => [
+                'total_time' => microtime(true) - $this->btime,
+            ],
+            'effective_url' => $this->effectiveUrl,
             'headers' => isset($this->client->headers) ? $this->client->headers : [],
             'status' => $this->client->statusCode,
             'body' => $this->client->body
-        ];
+        ]);
     }
 
     protected function checkStatusCode($request)
