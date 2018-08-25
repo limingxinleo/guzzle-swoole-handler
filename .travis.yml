@@ -26,7 +26,8 @@ before_install:
 install:
   - cd $TRAVIS_BUILD_DIR
   # 更新扩展
-  - printf "\n" | pecl install --force swoole
+  - bash tests/swoole.install.sh
+  - echo "extension = swoole.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - phpenv config-rm xdebug.ini
   # 安装项目
   - composer self-update
