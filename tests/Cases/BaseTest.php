@@ -118,4 +118,22 @@ class BaseTest extends TestCase
 
         $this->assertTrue(true);
     }
+
+    public function testUserInfo()
+    {
+        go(function () {
+            $url = 'https://username:password@api.tb.swoft.lmx0536.cn';
+            $handler = new CoroutineHandler();
+            $request = new Request('GET', $url . '/echo');
+
+            $res = $handler($request, ['timeout' => 5])->wait();
+            $content = $res->getBody()->getContents();
+            $json = json_decode($content, true);
+
+            $this->assertEquals(0, $json['code']);
+            $json = $json['data'];
+            $this->assertEquals('Basic ' . base64_encode('username:password'), $json['headers']['authorization'][0]);
+        });
+        $this->assertTrue(true);
+    }
 }

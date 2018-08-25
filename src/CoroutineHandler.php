@@ -77,6 +77,12 @@ class CoroutineHandler
         foreach ($request->getHeaders() as $name => $value) {
             $headers[$name] = implode(',', $value);
         }
+
+        $userInfo = $request->getUri()->getUserInfo();
+        if ($userInfo) {
+            $headers['Authorization'] = sprintf('Basic %s', base64_encode($userInfo));
+        }
+
         // TODO: 不知道为啥，这个扔进来就400
         unset($headers['Content-Length']);
         $this->client->setHeaders($headers);
