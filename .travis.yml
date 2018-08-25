@@ -26,6 +26,8 @@ before_install:
 install:
   - cd $TRAVIS_BUILD_DIR
   # 更新扩展
+  - wget https://github.com/redis/hiredis/archive/v0.13.3.tar.gz -O hiredis.tar.gz && mkdir -p hiredis && tar -xf hiredis.tar.gz -C hiredis --strip-components=1 && cd hiredis && sudo make -j$(nproc) && sudo make install && sudo ldconfig && cd ..
+  - echo 'no' | pecl install -f redis
   - bash tests/swoole.install.sh
   - echo "extension = swoole.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - phpenv config-rm xdebug.ini
