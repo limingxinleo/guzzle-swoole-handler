@@ -14,14 +14,14 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Psr7\Request;
 use Guzzlex\SwooleHandlers\CoroutineHandler;
 
-class BaseTest extends TestCase
+class CoroutineHandlerTest extends TestCase
 {
+    const URL = 'https://api.tb.swoft.lmx0536.cn';
+
     public function testExample()
     {
         $this->assertTrue(true);
     }
-
-    const URL = 'https://api.tb.swoft.lmx0536.cn';
 
     protected function tearDown()/* The :void return type declaration that should be here would cause a BC issue */
     {

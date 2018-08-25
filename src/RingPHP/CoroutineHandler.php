@@ -1,9 +1,10 @@
 <?php
-namespace Guzzlex\SwooleHandlers;
+namespace Guzzlex\SwooleHandlers\RingPHP;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\Ring\Core;
 use Psr\Http\Message\RequestInterface;
 use Swoole\Coroutine;
 use GuzzleHttp\RequestOptions;
@@ -32,45 +33,82 @@ class CoroutineHandler
 
     public function __invoke($request)
     {
-        $method = $request['http_method'];
-        $scheme = $request['scheme'];
-        $uri = $request['uri'];
-        $body = $request['body'];
-        $headers = $request['headers'];
+        $method = $request['http_method'] ?? 'GET';
+        $scheme = $request['scheme'] ?? 'http';
+        $ssl = 'https' === $scheme;
+        $uri = $request['uri'] ?? '/';
+        $body = $request['body'] ?? '';
         $params = parse_url(Core::url($request));
         $host = $params['host'];
+        if (!isset($params['port'])) {
+            $params['port'] = $ssl ? '443' : '80';
+        }
         $port = $params['port'];
-        $clientConfig = $request['client']['curl'] ?? [];
-
-        $ssl = 'https' === $scheme;
+        $path = $params['path'] ?? '/';
 
         $this->client = new Client($host, $port, $ssl);
         $this->client->setMethod($method);
         $this->client->setData($body);
 
         // 初始化Headers
-        $this->initHeaders($headers);
-
-        if (isset($clientConfig[CURLOPT_USERPWD])) {
-            list($name, $pwd) = explode(':', $clientConfig[CURLOPT_USERPWD]);
-            $this->settings['http_user'] = $name;
-            $this->settings['http_password'] = $pwd;
-        }
+        $this->initHeaders($request);
 
         // 设置客户端参数
         if (!empty($this->settings)) {
             $this->client->set($this->settings);
         }
+
+        $this->client->execute($path);
+
+        $ex = $this->checkStatusCode($request);
+        if ($ex !== true) {
+            return \GuzzleHttp\Promise\rejection_for($ex);
+        }
+
+        return $this->getResponse();
     }
 
-    protected function initHeaders($headerArray = [])
+    protected function initHeaders($request)
     {
         $headers = [];
-        foreach ($headerArray as $name => $value) {
+        foreach ($request['headers'] ?? [] as $name => $value) {
             $headers[$name] = implode(',', $value);
         }
+
+        $clientConfig = $request['client']['curl'] ?? [];
+        if (isset($clientConfig[CURLOPT_USERPWD])) {
+            $userInfo = $clientConfig[CURLOPT_USERPWD];
+            $headers['Authorization'] = sprintf('Basic %s', base64_encode($userInfo));
+        }
+
         // TODO: 不知道为啥，这个扔进来就400
         unset($headers['Content-Length']);
         $this->client->setHeaders($headers);
+    }
+
+    protected function getResponse()
+    {
+        return [
+            'headers' => isset($this->client->headers) ? $this->client->headers : [],
+            'status' => $this->client->statusCode,
+            'body' => $this->client->body
+        ];
+    }
+
+    protected function checkStatusCode($request)
+    {
+        $statusCode = $this->client->statusCode;
+        $errCode = $this->client->errCode;
+        $ctx = [
+            'statusCode' => $statusCode,
+            'errCode' => $errCode,
+        ];
+        if ($statusCode === -1) {
+            return new ConnectException(sprintf('Connection timed out errCode=%s', $errCode), $request, null, $ctx);
+        } elseif ($statusCode === -2) {
+            return new RequestException('Request timed out', $request, null, null, $ctx);
+        }
+
+        return true;
     }
 }
