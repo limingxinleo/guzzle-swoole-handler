@@ -68,7 +68,7 @@ class BaseTest extends TestCase
             $a = new CoroutineHandler();
             $request = new Request('GET', static::URL);
             $s = microtime(true);
-            $a($request, ['delay' => 1])->wait();
+            $a($request, ['delay' => 1, 'timeout' => 5])->wait();
             $this->assertGreaterThan(0.001, microtime(true) - $s);
         });
         $this->assertTrue(true);
@@ -116,6 +116,24 @@ class BaseTest extends TestCase
             $this->assertEquals(1, $res['json']['id']);
         });
 
+        $this->assertTrue(true);
+    }
+
+    public function testUserInfo()
+    {
+        go(function () {
+            $url = 'https://username:password@api.tb.swoft.lmx0536.cn';
+            $handler = new CoroutineHandler();
+            $request = new Request('GET', $url . '/echo');
+
+            $res = $handler($request, ['timeout' => 5])->wait();
+            $content = $res->getBody()->getContents();
+            $json = json_decode($content, true);
+
+            $this->assertEquals(0, $json['code']);
+            $json = $json['data'];
+            $this->assertEquals('Basic ' . base64_encode('username:password'), $json['headers']['authorization'][0]);
+        });
         $this->assertTrue(true);
     }
 }
