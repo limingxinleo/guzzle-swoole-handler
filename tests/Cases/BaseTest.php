@@ -68,7 +68,7 @@ class BaseTest extends TestCase
             $a = new CoroutineHandler();
             $request = new Request('GET', static::URL);
             $s = microtime(true);
-            $a($request, ['delay' => 1])->wait();
+            $a($request, ['delay' => 1, 'timeout' => 5])->wait();
             $this->assertGreaterThan(0.001, microtime(true) - $s);
         });
         $this->assertTrue(true);
