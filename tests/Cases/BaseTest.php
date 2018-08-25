@@ -45,7 +45,7 @@ class BaseTest extends TestCase
                 $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])->wait();
             } catch (\Exception $ex) {
                 $this->assertInstanceOf(ConnectException::class, $ex);
-                $this->assertEquals('Connection timed out errCode=61', $ex->getMessage());
+                $this->assertEquals(0, strpos($ex->getMessage(), 'Connection timed out errCode='));
             }
         });
         $this->assertTrue(true);
