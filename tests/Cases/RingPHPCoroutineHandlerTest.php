@@ -51,4 +51,30 @@ class RingPHPCoroutineHandlerTest extends TestCase
         });
         $this->assertTrue(true);
     }
+
+    public function testCreatesErrors()
+    {
+        go(function () {
+            $handler = new CoroutineHandler();
+            $response = $handler([
+                'http_method' => 'GET',
+                'uri' => '/',
+                'headers' => ['host' => [static::URL]],
+                'client' => ['timeout' => 0.001],
+            ]);
+
+            $this->assertNull($response['status']);
+            $this->assertNull($response['reason']);
+            $this->assertEquals([], $response['headers']);
+            $this->assertInstanceOf(
+                'GuzzleHttp\Ring\Exception\RingException',
+                $response['error']
+            );
+
+            $this->assertEquals(
+                0,
+                strpos('Connection timed out errCode=', $response['error']->getMessage())
+            );
+        });
+    }
 }

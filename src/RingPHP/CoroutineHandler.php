@@ -3,15 +3,11 @@ namespace Guzzlex\SwooleHandlers\RingPHP;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Psr7;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\Future\CompletedFutureArray;
-use Psr\Http\Message\RequestInterface;
 use Swoole\Coroutine;
-use GuzzleHttp\RequestOptions;
 use Swoole\Coroutine\Http\Client;
-use GuzzleHttp\Promise\FulfilledPromise;
-use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Ring\Exception\RingException;
 
 /**
  * Http handler that uses Swoole Coroutine as a transport layer.
@@ -77,7 +73,12 @@ class CoroutineHandler
 
         $ex = $this->checkStatusCode($request);
         if ($ex !== true) {
-            return \GuzzleHttp\Promise\rejection_for($ex);
+            return [
+                'status' => null,
+                'reason' => null,
+                'headers' => [],
+                'error' => $ex
+            ];
         }
 
         return $this->getResponse();
@@ -130,14 +131,11 @@ class CoroutineHandler
     {
         $statusCode = $this->client->statusCode;
         $errCode = $this->client->errCode;
-        $ctx = [
-            'statusCode' => $statusCode,
-            'errCode' => $errCode,
-        ];
+
         if ($statusCode === -1) {
-            return new ConnectException(sprintf('Connection timed out errCode=%s', $errCode), $request, null, $ctx);
+            return new RingException(sprintf('Connection timed out errCode=%s', $errCode));
         } elseif ($statusCode === -2) {
-            return new RequestException('Request timed out', $request, null, null, $ctx);
+            return new RingException('Request timed out');
         }
 
         return true;
