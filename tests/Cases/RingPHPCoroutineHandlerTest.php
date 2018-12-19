@@ -9,6 +9,7 @@
 namespace Tests\Cases;
 
 use Guzzlex\SwooleHandlers\RingPHP\CoroutineHandler;
+use Swoole\Coroutine;
 use Tests\TestCase;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
