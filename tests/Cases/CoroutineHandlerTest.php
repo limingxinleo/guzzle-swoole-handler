@@ -8,6 +8,7 @@
 // +----------------------------------------------------------------------
 namespace Tests\Cases;
 
+use Swoole\Coroutine;
 use Tests\TestCase;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
@@ -23,14 +24,6 @@ class CoroutineHandlerTest extends TestCase
         $this->assertTrue(true);
     }
 
-    protected function tearDown()/* The :void return type declaration that should be here would cause a BC issue */
-    {
-        parent::tearDown();
-        swoole_timer_after(6 * 1000, function () {
-            swoole_event_exit();
-        });
-    }
-
     protected function getHandler($options = [])
     {
         return new CoroutineHandler($options);
@@ -38,7 +31,7 @@ class CoroutineHandlerTest extends TestCase
 
     public function testCreatesCurlErrors()
     {
-        go(function () {
+        if (Coroutine::getuid() > 0) {
             $handler = new CoroutineHandler();
             $request = new Request('GET', 'http://localhost:123');
             try {
@@ -47,36 +40,37 @@ class CoroutineHandlerTest extends TestCase
                 $this->assertInstanceOf(ConnectException::class, $ex);
                 $this->assertEquals(0, strpos($ex->getMessage(), 'Connection timed out errCode='));
             }
-        });
+        }
         $this->assertTrue(true);
     }
 
     public function testReusesHandles()
     {
-        go(function () {
+        if (Coroutine::getuid() > 0) {
+
             $a = new CoroutineHandler();
             $request = new Request('GET', static::URL);
             $a($request, []);
             $a($request, []);
-        });
+        }
         $this->assertTrue(true);
     }
 
     public function testDoesSleep()
     {
-        go(function () {
+        if (Coroutine::getuid() > 0) {
             $a = new CoroutineHandler();
             $request = new Request('GET', static::URL);
             $s = microtime(true);
             $a($request, ['delay' => 1, 'timeout' => 5])->wait();
             $this->assertGreaterThan(0.001, microtime(true) - $s);
-        });
+        }
         $this->assertTrue(true);
     }
 
     public function testCreatesErrorsWithContext()
     {
-        go(function () {
+        if (Coroutine::getuid() > 0) {
             $handler = new CoroutineHandler();
             $request = new Request('GET', 'http://localhost:123');
             $called = false;
@@ -88,14 +82,14 @@ class CoroutineHandlerTest extends TestCase
                 });
             $p->wait();
             $this->assertTrue($called);
-        });
+        };
 
         $this->assertTrue(true);
     }
 
     public function testGuzzleClient()
     {
-        go(function () {
+        if (Coroutine::getuid() > 0) {
             $client = new Client([
                 'base_uri' => static::URL
             ]);
@@ -114,14 +108,14 @@ class CoroutineHandlerTest extends TestCase
             $res = $res['data'];
             $this->assertEquals(md5(1234), $res['headers']['x-token'][0]);
             $this->assertEquals(1, $res['json']['id']);
-        });
+        }
 
         $this->assertTrue(true);
     }
 
     public function testUserInfo()
     {
-        go(function () {
+        if (Coroutine::getuid() > 0) {
             $url = 'https://username:password@api.tb.swoft.lmx0536.cn';
             $handler = new CoroutineHandler();
             $request = new Request('GET', $url . '/echo');
@@ -133,7 +127,8 @@ class CoroutineHandlerTest extends TestCase
             $this->assertEquals(0, $json['code']);
             $json = $json['data'];
             $this->assertEquals('Basic ' . base64_encode('username:password'), $json['headers']['authorization'][0]);
-        });
+        }
+
         $this->assertTrue(true);
     }
 }

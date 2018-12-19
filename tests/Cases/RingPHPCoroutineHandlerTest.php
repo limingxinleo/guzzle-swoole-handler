@@ -18,17 +18,9 @@ class RingPHPCoroutineHandlerTest extends TestCase
 {
     const URL = 'https://api.tb.swoft.lmx0536.cn';
 
-    protected function tearDown()/* The :void return type declaration that should be here would cause a BC issue */
-    {
-        parent::tearDown();
-        swoole_timer_after(6 * 1000, function () {
-            swoole_event_exit();
-        });
-    }
-
     public function testUserInfo()
     {
-        go(function () {
+        if (Coroutine::getuid() > 0) {
             $url = 'api.tb.swoft.lmx0536.cn';
             $handler = new CoroutineHandler();
 
@@ -48,13 +40,13 @@ class RingPHPCoroutineHandlerTest extends TestCase
             $this->assertEquals(0, $json['code']);
             $json = $json['data'];
             $this->assertEquals('Basic ' . base64_encode('username:password'), $json['headers']['authorization'][0]);
-        });
+        }
         $this->assertTrue(true);
     }
 
     public function testCreatesErrors()
     {
-        go(function () {
+        if (Coroutine::getuid() > 0) {
             $handler = new CoroutineHandler();
             $response = $handler([
                 'http_method' => 'GET',
@@ -75,6 +67,6 @@ class RingPHPCoroutineHandlerTest extends TestCase
                 0,
                 strpos('Connection timed out errCode=', $response['error']->getMessage())
             );
-        });
+        }
     }
 }
