@@ -54,6 +54,9 @@ class CoroutineHandler
         }
         $port = $params['port'];
         $path = $params['path'] ?? '/';
+        if (isset($params['query']) && is_string($params['query'])) {
+            $path .= '?' . $params['query'];
+        }
 
         $this->client = new Client($host, $port, $ssl);
         $this->client->setMethod($method);

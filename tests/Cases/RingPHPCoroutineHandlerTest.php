@@ -70,4 +70,27 @@ class RingPHPCoroutineHandlerTest extends TestCase
             );
         }
     }
+
+    public function testWithoutQuery()
+    {
+        if (Coroutine::getuid() > 0) {
+            $url = 'api.tb.swoft.lmx0536.cn';
+            $handler = new CoroutineHandler();
+
+            $res = $handler([
+                'http_method' => 'GET',
+                'headers' => ['host' => [$url]],
+                'uri' => '/echo?a=1&b=2'
+            ]);
+
+            $json = json_decode($res['body'], true);
+
+            $this->assertEquals(0, $json['code']);
+            $json = $json['data'];
+
+            $this->assertEquals(1, $json['body']['a']);
+            $this->assertEquals(2, $json['body']['b']);
+        }
+        $this->assertTrue(true);
+    }
 }
